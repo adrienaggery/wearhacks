@@ -1,23 +1,49 @@
-var noble = require('noble');
+var RollingSpider = require("rolling-spider");
+var yourDrone = new RollingSpider();
+var temporal = require("temporal");
 
-var RS_uuid = '078b9f9b666a482d87472ba38d7e5e26';
+var Myo = require('myo');
+var myMyo = Myo.create(); //default to id 0
 
-noble.on('stateChange', function(state) {
-	if (state === 'poweredOn') {
-		noble.startScanning();
-		console.log("Started scanning");
-	} else {
-		noble.stopScanning();
-		console.log("Stopped scanning");
-	}
+yourDrone.connect(function() {
+  yourDrone.setup(function() {
+    // NEW CODE
+    temporal.queue([
+      {
+        delay: 0,
+        task: function () {
+          yourDrone.flatTrim();
+          yourDrone.startPing();
+          yourDrone.takeOff();
+        }
+      },
+      {
+        delay: 1000,
+        task: function () {
+          yourDrone.forward();
+        }
+      },
+      {
+        delay: 500,
+        task: function () {
+          yourDrone.land();
+        }
+      }]);
+  });
 });
 
-noble.on('discover', function(device){
-	if (device.uuid == RS_uuid)
-	{
-		device.updateRssi();
-		console.log("RS drone found, signal strenght.");
-		noble.stopScanning();
-		RS_connect(device);
-	}
+myMyo.on('connected', function () {
+    myMyo.setLockingPolicy('none');
+});
+
+myMyo.on('double_tap', function (edge) {
+    if(edge){
+        if(!myMyo.isLocked)  {
+            console.log("Lock");
+            myMyo.lock();
+        }else {
+            console.log("Unlock");
+            myMyo.unlock();
+        }
+    }
 });
