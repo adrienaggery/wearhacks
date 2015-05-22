@@ -15,26 +15,9 @@ noble.on('stateChange', function(state) {
 noble.on('discover', function(device){
 	if (device.uuid == RS_uuid)
 	{
-		console.log("RS drone found.");
+		device.updateRssi();
+		console.log("RS drone found, signal strenght.");
 		noble.stopScanning();
 		RS_connect(device);
 	}
 });
-
-function RS_connect(drone)
-{
-	drone.on('disconnect', function(){
-		console.log("Lost connection to RS drone.");
-		process.exit(0);
-	});
-	drone.connect(function(error)
-	{
-		if (error){
-			console.log("Error while connecting to the drone: " + error);
-			process.exit(0);
-		}
-		else {
-			console.log("Connected to RS drone.");
-		}
-	});
-}
