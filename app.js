@@ -23,33 +23,43 @@ myMyo.on('orientation', function(data){
 		pitch : getPitch(myMyo.lastIMU.orientation),
 		yaw : getYaw(myMyo.lastIMU.orientation)
 	};
-	
+	console.log();	
 	var percent = (orientationAngles.roll - firstOrientationAngles.roll) * (100 / firstOrientationAngles.roll) * 4;
-	/*if (percent > 35)
+	if (orientationAngles.pitch < 7)
+	{	
+		if (drone.connected)
+			drone.backward((7 - orientationAngles.pitch) * (100 / 7), 0);		
+	}
+	else if (orientationAngles.pitch > 11)
+	{	
+		if (drone.connected)
+			drone.forward((orientationAngles.pitch - 11) * (100 / 7), 0);		
+	}
+	if (percent > 35)
 	{
 		mov = true;
-		var val = Math.min((percent - 25) * 2, 100);
+		var val = Math.min(percent, 100);
 		console.log(val);
-		if (drone)
-			drone.tiltRight(val, 0);		
+		if (drone.connected)
+			drone.tiltRight(val- 35, 0);		
 	}
 	else if (percent < -35)
 	{
 		mov = true;
-		var val = Math.min((-percent - 25) * 2, 100);
+		var val = Math.min(-percent, 100);
 		console.log(val);
-		if (drone)
-			drone.tiltLeft(val, 0);		
+		if (drone.connected)
+			drone.tiltLeft(val - 35, 0);		
 	}
 	else
 	{
 		if (mov)
 		{
-			if (drone)
+			if (drone.connected)
 				drone.flatTrim();
 			mov = false;
 		}
-	}*/
+	}
 	}
 });
 
@@ -125,7 +135,7 @@ myMyo.on('double_tap', function (edge) {
 	if(edge){
 		if (!started)
 		{
-			if (drone)
+			if (drone.connected)
 			{
 				drone.flatTrim();
 				drone.startPing();
@@ -135,7 +145,7 @@ myMyo.on('double_tap', function (edge) {
 		}
 		else
 		{
-			if (drone)
+			if (drone.connected)
 				drone.land();
 			console.log("Aterrisage");
 		}
@@ -147,8 +157,17 @@ myMyo.on('fist', function(edge) {
 	//edge is true if it's the start of the pose, false if it's the end of the pose
 	if(edge){
 		console.log(drone);
-		if (drone)
-			drone.up();
+		if (drone.connected)
+		{
+			if (drone.status.flying)
+				drone.up();
+			else
+			{
+				drone.flatTrim();
+				drone.startPing();
+				drone.takeOff();
+			}
+		}
 		console.log("poing fermer");
 	}
 	poing = true;
@@ -157,7 +176,7 @@ myMyo.on('fist', function(edge) {
 //Fires a spread_hold event if spread is held for half a second
 myMyo.on('fingers_spread', function(edge){
 	if(edge){
-		if (drone)
+		if (drone.connected)
 			drone.down();
 		console.log("poing ouvert");
 	}
