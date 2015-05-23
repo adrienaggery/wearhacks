@@ -11,6 +11,8 @@ var poing = false;
 var started = false;
 var mov = false;
 var canBackflip = true;
+var canSend = true;
+var timer = 100;
 
 var firstOrientationAngles;
 var curr;
@@ -30,38 +32,68 @@ myMyo.on('orientation', function(data){
 	setTimeout(backflipHandle.bind(undefined, orientationAngles), 300);
 	curr = orientationAngles;
 	var percent = (orientationAngles.roll - firstOrientationAngles.roll) * (100 / firstOrientationAngles.roll) * 4;
-	if (orientationAngles.pitch < 7)
+	if (orientationAngles.pitch < 8)
 	{	
-		if (drone.connected)
-			drone.backward((7 - orientationAngles.pitch) * (100 / 7), 0);		
+		if (canSend)
+		{
+			console.log("backward");
+			canSend = false;
+			if (drone.connected)
+				drone.backward((8 - orientationAngles.pitch) * (100 / 7), 0);
+			setTimeout(function(){canSend = true;}, timer);
+		}	
 	}
-	else if (orientationAngles.pitch > 11)
+	else if (orientationAngles.pitch > 12)
 	{	
-		if (drone.connected)
-			drone.forward((orientationAngles.pitch - 11) * (100 / 7), 0);		
+		if (canSend)
+		{
+			console.log("forward");
+			canSend = false;
+			if (drone.connected)
+				drone.forward((orientationAngles.pitch - 12) * (100 / 7), 0);
+			setTimeout(function(){canSend = true;}, timer);
+		}		
 	}
-	if (percent > 35)
+	if (percent > 20)
 	{
 		mov = true;
 		var val = Math.min(percent, 100);
-		console.log(val);
-		if (drone.connected)
-			drone.tiltRight(val - 35, 0);		
+		//console.log(val);
+		if (canSend)
+		{
+			console.log("tilt right");
+			canSend = false;
+			if (drone.connected)
+				drone.tiltRight((val - 20)/2, 0);
+			setTimeout(function(){canSend = true;}, timer);
+		}		
 	}
-	else if (percent < -35)
+	else if (percent < -20)
 	{
 		mov = true;
 		var val = Math.min(-percent, 100);
-		console.log(val);
-		if (drone.connected)
-			drone.tiltLeft(val - 35, 0);		
+		//console.log(val);
+		if (canSend)
+		{
+			console.log("tilt left");
+			canSend = false;
+			if (drone.connected)
+				drone.tiltLeft((val - 20)/2, 0);
+			setTimeout(function(){canSend = true;}, timer);
+		}
 	}
 	else
 	{
 		if (mov)
 		{
-			if (drone.connected)
-				drone.flatTrim();
+			if (canSend)
+			{
+				console.log("retablissement");
+				canSend = false;
+				if (drone.connected)
+					drone.flatTrim();
+				setTimeout(function(){canSend = true;}, timer);
+			}
 			mov = false;
 		}
 	}
@@ -75,7 +107,7 @@ function backflipHandle(old){
 	var diff_y = old.pitch - curr.pitch;
 	//console.log("x " + diff_x);
 	//console.log("y " + diff_y);
-	/*if (diff_x > 5)
+	if (diff_x > 5)
 	{
 		console.log("right");
 		if (drone.connected)
@@ -90,8 +122,8 @@ function backflipHandle(old){
 			drone.leftFlip();
 		setTimeout(function() { canBackflip = true;}, 2000);
 		canBackflip = false;	
-	}*/
-	if (diff_y > 5)
+	}
+	if (diff_y > 4)
 	{
 		console.log("up");
 		if (drone.connected)
@@ -173,11 +205,14 @@ myMyo.on('double_tap', function (edge) {
 
 myMyo.on('fist', function(edge) {
 	if(edge){
-		console.log(drone);
 		if (drone.connected)
 		{
-			if (drone.status.flying)
+			if (drone.status.flying && canSend)
+			{
+				canSend = false;
 				drone.up();
+				setTimeout(function(){canSend = true;}, timer);
+			}
 			else
 			{
 				drone.flatTrim();
@@ -190,10 +225,26 @@ myMyo.on('fist', function(edge) {
 	poing = true;
 });
 
+
+myMyo.on('rest', function(edge){
+	if (canSend)
+	{
+		console.log("retablissement");
+		canSend = false;
+		if (drone.connected)
+			drone.flatTrim();
+		setTimeout(function(){canSend = true;}, timer);
+	}
+});
 myMyo.on('fingers_spread', function(edge){
 	if(edge){
-		if (drone.connected)
-			drone.down();
+		if (canSend)
+		{
+			canSend = false;
+			if (drone.connected)
+				drone.down();
+			setTimeout(function(){canSend = true;}, timer);
+		}
 		console.log("poing ouvert");
 	}
 });
