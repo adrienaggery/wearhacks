@@ -14,6 +14,7 @@ var canBackflip = true;
 var sendVibr = true;
 var firstOrientationAngles;
 var curr;
+var move = -1;
 
 function sendMove()
 {
@@ -21,7 +22,7 @@ function sendMove()
 	{
 		sendVibr = false;
 		myMyo.vibrate('short');
-		setTimeout(function(){sendVibr = true;}, 500);
+		setTimeout(function(){sendVibr = true;}, 550);
 	}
 }
 
@@ -43,40 +44,57 @@ myMyo.on('orientation', function(data){
 	console.log(percent);
 	if (orientationAngles.pitch < 8)
 	{
-		sendMove();
-		console.log("backward");
-		if (drone.connected)
-			drone.backward((8 - orientationAngles.pitch) * (100 / 7), 0);
+		if (move == 0)
+		{
+			sendMove();
+			console.log("backward");
+			if (drone.connected)
+				drone.backward((8 - orientationAngles.pitch) * (100 / 7), 0);
+		}
+		setTimeout(function(){move = 0;}, 200);
 	}
 	else if (orientationAngles.pitch > 12)
 	{	
-		sendMove();
-		console.log("forward");
-		if (drone.connected)
-			drone.forward((orientationAngles.pitch - 12) * (100 / 7), 0);
+		if (move == 1)
+		{
+			sendMove();
+			console.log("forward");
+			if (drone.connected)
+				drone.forward((orientationAngles.pitch - 12) * (100 / 7), 0);
+		}
+		setTimeout(function(){move = 1;}, 200);
 	}
 	else if (percent > 15)
 	{
-		sendMove();
-		mov = true;
-		var val = Math.min(percent, 100);
-		//console.log(val);
-		console.log("tilt right");
-		if (drone.connected)
-			drone.tiltRight(val - 15, 0);
+		if (move == 2)
+		{
+			sendMove();
+			mov = true;
+			var val = Math.min(percent, 100);
+			//console.log(val);
+			console.log("tilt right");
+			if (drone.connected)
+				drone.tiltRight(val - 15, 0);
+		}
+		setTimeout(function(){move = 2;}, 200);
 	}
 	else if (percent < -15)
 	{
-		sendMove();
-		mov = true;
-		var val = Math.min(-percent, 100);
-		//console.log(val);
-		console.log("tilt left");
-		if (drone.connected)
-			drone.tiltLeft(val - 15, 0);
+		if (move == 3)
+		{
+			sendMove();
+			mov = true;
+			var val = Math.min(-percent, 100);
+			//console.log(val);
+			console.log("tilt left");
+			if (drone.connected)
+				drone.tiltLeft(val - 15, 0);
+		}
+		setTimeout(function(){move = 3;}, 200);
 	}
 	else
 	{
+		move = -1;
 		if (mov)
 		{
 			console.log("retablissement");
