@@ -6,24 +6,29 @@ var lastevent = "";
 keypress(process.stdin);
 
 var myMyo = Myo.create(); //default to id 0
-// Implement your own locking. Example: (Handle locking yourself like described above!!!!)
 var lastevent = "";
 var poing = false;
 var started = false;
 var mov = false;
+var canBackflip = true;
 
 var firstOrientationAngles;
+var curr;
 
 myMyo.on('orientation', function(data){
 	if (started)
 	{
+	if (!canBackflip)
+		return ;
 	getFirstOrientation();
 	var orientationAngles ={
 		roll : getRoll(myMyo.lastIMU.orientation),
 		pitch : getPitch(myMyo.lastIMU.orientation),
 		yaw : getYaw(myMyo.lastIMU.orientation)
 	};
-	console.log();	
+	
+	setTimeout(backflipHandle.bind(undefined, orientationAngles), 300);
+	curr = orientationAngles;
 	var percent = (orientationAngles.roll - firstOrientationAngles.roll) * (100 / firstOrientationAngles.roll) * 4;
 	if (orientationAngles.pitch < 7)
 	{	
@@ -41,7 +46,7 @@ myMyo.on('orientation', function(data){
 		var val = Math.min(percent, 100);
 		console.log(val);
 		if (drone.connected)
-			drone.tiltRight(val- 35, 0);		
+			drone.tiltRight(val - 35, 0);		
 	}
 	else if (percent < -35)
 	{
@@ -62,6 +67,48 @@ myMyo.on('orientation', function(data){
 	}
 	}
 });
+
+function backflipHandle(old){
+	if (!canBackflip)
+		return ;
+	var diff_x = old.yaw - curr.yaw;
+	var diff_y = old.pitch - curr.pitch;
+	//console.log("x " + diff_x);
+	//console.log("y " + diff_y);
+	/*if (diff_x > 5)
+	{
+		console.log("right");
+		if (drone.connected)
+			drone.rightFlip();
+		setTimeout(function() { canBackflip = true;}, 2000);
+		canBackflip = false;	
+	}
+	if (diff_x < -5)
+	{
+		console.log("left");
+		if (drone.connected)
+			drone.leftFlip();
+		setTimeout(function() { canBackflip = true;}, 2000);
+		canBackflip = false;	
+	}*/
+	if (diff_y > 5)
+	{
+		console.log("up");
+		if (drone.connected)
+			drone.frontFlip();
+		setTimeout(function() { canBackflip = true;}, 2000);
+		canBackflip = false;	
+	}
+	if (diff_y < -5)
+	{
+		console.log("down");
+		if (drone.connected)
+			drone.backFlip();
+		setTimeout(function() { canBackflip = true;}, 2000);
+		canBackflip = false;	
+	}
+	//console.log(curr);
+}
 
 function getFirstOrientation(){
 	firstOrientationAngles ={
@@ -102,35 +149,6 @@ function getYaw(data){
 	return yaw_w;
 }
 
-/*myMyo.on('imu', function(data){
-	//if (poing){
-		console.log(data);
-		if(data.gyroscope.x > 15){
-			if (lastevent != "right")
-			{
-				lastevent = "right";
-				console.log("Move right !!");
-				if (drone)
-					drone.tiltRight();
-			}
-		}
-		else if(data.gyroscope.y > 50){
-			if (lastevent != "left")
-			{
-				console.log("Move left !!");
-				lastevent = "left";
-				if (drone)
-					drone.tiltLeft();
-			}
-		}
-		else
-		{
-			if (drone)
-				drone.flatTrim();
-		}
-	//}
-});*/
-
 myMyo.on('double_tap', function (edge) {
 	if(edge){
 		if (!started)
@@ -154,7 +172,6 @@ myMyo.on('double_tap', function (edge) {
 });
 
 myMyo.on('fist', function(edge) {
-	//edge is true if it's the start of the pose, false if it's the end of the pose
 	if(edge){
 		console.log(drone);
 		if (drone.connected)
@@ -173,7 +190,6 @@ myMyo.on('fist', function(edge) {
 	poing = true;
 });
 
-//Fires a spread_hold event if spread is held for half a second
 myMyo.on('fingers_spread', function(edge){
 	if(edge){
 		if (drone.connected)
@@ -187,7 +203,7 @@ myMyo.on('fingers_spread', function(edge){
     myMyo.vibrate();
 });*/
 
-/*8myMyo.on('wave_in', function(edge){
+8/*myMyo.on('wave_in', function(edge){
 	if(edge){
 		console.log("main a gauche");
 	}
@@ -215,7 +231,7 @@ process.stdin.on('keypress', function(ch, key){
 		drone.forward();
 	break;
 	case 'z':
-		drone.leftFlip();
+		drone.frontFlip();
 	break;
 	case 'q':
 		drone.emergency();
