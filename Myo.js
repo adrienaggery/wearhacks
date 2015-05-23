@@ -4,7 +4,7 @@ var myMyo = Myo.create(); //default to id 0
 
 var poing = false;
 
-myMyo.on('gyroscope', function(data){
+myMyo.on('imu', function(data){
 	if (poing){
     if(data.x > 8){
         console.log("Move right !!");
