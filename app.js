@@ -41,13 +41,13 @@ myMyo.on('orientation', function(data){
 	setTimeout(backflipHandle.bind(undefined, orientationAngles), 300);
 	curr = orientationAngles;
 	var percent = (orientationAngles.roll - firstOrientationAngles.roll) * (100 / firstOrientationAngles.roll) * 4;
-	console.log(percent);
 	if (orientationAngles.pitch < 8)
 	{
 		if (move == 0)
 		{
 			sendMove();
-			console.log("backward");
+			mov = true;
+			console.log("backward " + (8 - orientationAngles.pitch) * (100 / 7));
 			if (drone.connected)
 				drone.backward((8 - orientationAngles.pitch) * (100 / 7), 0);
 		}
@@ -58,7 +58,8 @@ myMyo.on('orientation', function(data){
 		if (move == 1)
 		{
 			sendMove();
-			console.log("forward");
+			mov = true;
+			console.log("forward " + (orientationAngles.pitch - 12) * (100 / 7));
 			if (drone.connected)
 				drone.forward((orientationAngles.pitch - 12) * (100 / 7), 0);
 		}
@@ -72,7 +73,7 @@ myMyo.on('orientation', function(data){
 			mov = true;
 			var val = Math.min(percent, 100);
 			//console.log(val);
-			console.log("tilt right");
+			console.log("tilt right " + (val - 20));
 			if (drone.connected)
 				drone.tiltRight(val - 20, 0);
 		}
@@ -86,7 +87,7 @@ myMyo.on('orientation', function(data){
 			mov = true;
 			var val = Math.min(-percent, 100);
 			//console.log(val);
-			console.log("tilt left");
+			console.log("tilt left " + (val - 25));
 			if (drone.connected)
 				drone.tiltLeft(val - 25, 0);
 		}
@@ -214,7 +215,7 @@ myMyo.on('fist', function(edge) {
 		if (drone.connected)
 		{
 			if (drone.status.flying)
-				drone.up(80, 50);
+				drone.up(100, 50);
 			else
 			{
 				drone.flatTrim();
